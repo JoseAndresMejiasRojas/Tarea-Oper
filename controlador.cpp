@@ -1,7 +1,8 @@
 #include "controlador.h"
 
-#include <iostream> // MISMA MIERDA QUE FORK
-#include <unistd.h> // Reconoce el fork aquí, no en el main.cpp
+#include <stdlib.h>
+#include <iostream>
+#include <unistd.h>
 
 #define TAMANO 100
 
@@ -42,19 +43,18 @@ void Controlador::matriz_random( unsigned short** matriz, int tamano )
 // Aquí iniciamos con los procesos :)
 void Controlador::multiplicacion_matrices()
 {
-    int id_procesos;
-    // 11 procesos hijos + el padre.
-    for( size_t contador = 0; contador < 11; ++contador  )
+    for( size_t contador = 0; contador < 10; ++contador )
     {
-        id_procesos = fork();
-    }
+        if( fork() != 0 )
+        {
+            // Lo que hace el padre, como hay 10 iteraciones, pasa 10 veces por acá.
+            continue;
+        }
+        else
+        {
+            // Lo que hace el hijo.
 
-
-    // 12 procesos en total a partir de acá.
-    if( id_procesos != 0 )  // Padre
-    {
-    }
-    else                    // Hijos
-    {
+            exit(0);        // Termino ejecución del hijo.
+        }
     }
 }

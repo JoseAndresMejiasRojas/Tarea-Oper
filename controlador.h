@@ -10,13 +10,13 @@ public:
 
 
 private:
-    void matriz_random( unsigned short** matriz, int tamano );
-    void inicializar_matriz( unsigned short** matriz, int tamano );
+    void matriz_random( int** matriz, int tamano );
+    void inicializar_matriz(int **matriz, int tamano );
 
 
 private:
-    unsigned short** matriz_a;
-    unsigned short** matriz_b;
+    int** matriz_a;
+    int** matriz_b;
 };
 
 #endif // CONTROLADOR_H

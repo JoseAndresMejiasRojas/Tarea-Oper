@@ -1,5 +1,5 @@
 #include <iostream>
-#include <cmath> // Random
+#include <cmath>
 #include <ctime>
 
 #include "controlador.h"

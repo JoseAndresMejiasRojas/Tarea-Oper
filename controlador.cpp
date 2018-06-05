@@ -67,6 +67,7 @@ void Controlador::matriz_random(int **matriz, int tamano )
 // Aquí iniciamos con los procesos :)
 void Controlador::multiplicacion_matrices()
 {
+    std::cout << "Padre" << std::endl;
     // Memoria compartida: Matriz int 100x100
     int shmid = shmget(IPC_PRIVATE, 4*100*100, IPC_CREAT | 0600);
 
@@ -99,6 +100,8 @@ void Controlador::multiplicacion_matrices()
             operacionSemaforo.sem_flg = 0;
             semop(semid, &operacionSemaforo, 1);
 
+            std::cout << "Hijo" << std::endl;
+
             exit(0);
         }
     }
@@ -107,7 +110,6 @@ void Controlador::multiplicacion_matrices()
     operacionSemaforo.sem_op = 1;
     operacionSemaforo.sem_flg = 0;
     semop(semid, &operacionSemaforo, 1);
-
 
     // fork() hijo impresor.
 }

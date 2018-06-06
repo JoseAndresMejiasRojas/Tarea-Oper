@@ -15,10 +15,10 @@
 
 // Para la cola de mensajes.
 //ToDo: definir cómo se va enviar la información a los procesos hijos.
-struct msgbuffer
+struct MS
 {
     long mtype;
-    char mtext[200];
+    char mtext[202];
 };
 
 union semun
@@ -42,12 +42,12 @@ Controlador::Controlador()
 
 void Controlador::inicializar_matriz(int** matriz, int tamano)
 {
-    srand(0);
+    srand(0);// Mando señal a los hijos.
     for( int contador = 0; contador < tamano; ++contador )
     {
         for( int otro_contador = 0; otro_contador < tamano; ++otro_contador )
         {
-            matriz[contador][otro_contador] = rand() % 100;
+            matriz[contador] = new int[tamano];
         }
     }
 }
@@ -59,15 +59,14 @@ void Controlador::matriz_random(int **matriz, int tamano )
     {
         for( int otro_contador = 0; otro_contador < tamano; ++otro_contador )
         {
-            matriz[contador][otro_contador] = 10;//Falta hacerlo random.
-        }
+            matriz[contador][otro_contador] = rand() % 100;
+        }// Mando señal a los hijos.
     }
 }
 
 // Aquí iniciamos con los procesos :)
 void Controlador::multiplicacion_matrices()
 {
-    std::cout << "Padre" << std::endl;
     // Memoria compartida: Matriz int 100x100
     int shmid = shmget(IPC_PRIVATE, 4*100*100, IPC_CREAT | 0600);
 
@@ -77,7 +76,7 @@ void Controlador::multiplicacion_matrices()
 
     // Cola de mensajes.
     int msgid = msgget(IPC_PRIVATE, IPC_CREAT| 0600);
-    struct msgbuffer msg_enviar;
+    struct msgbuf msg_enviar;
 
 
     for( size_t contador = 0; contador < 10; ++contador )
@@ -92,7 +91,7 @@ void Controlador::multiplicacion_matrices()
         }
         else
         {                   // Lo que hace el hijo.
-            struct msgbuffer msg_recibir;          // Cola de mensaje
+            struct msgbuf msg_recibir;          // Cola de mensaje
 
             // wait al hijo.
             operacionSemaforo.sem_num = 0;
@@ -105,11 +104,46 @@ void Controlador::multiplicacion_matrices()
             exit(0);
         }
     }
+
+    // Creados los 10 hijos.
+
+    // Padre envía info a sus hijos.
+    for( size_t fila = 0; fila < TAMANO; ++fila )
+    {
+        for( size_t columna = 0; columna < TAMANO; ++columna )
+        {
+            // Copio la posición (fila, columna) al array.
+
+            // Obtengo y copio fila
+            devolver_fila(matriz_a, fila);
+
+            // Obtengo y copio columna
+            devolver_columna(matriz_a, columna);
+
+            // Copio vector columna
+        }
+    }
+
+
+/*
     // Mando señal a los hijos.
     operacionSemaforo.sem_num = 0;
     operacionSemaforo.sem_op = 1;
     operacionSemaforo.sem_flg = 0;
     semop(semid, &operacionSemaforo, 1);
+    */
+
 
     // fork() hijo impresor.
+}
+
+int* Controlador::devolver_fila( int** matriz, int fila )
+{
+    // Aquí mismo copio al array (accediento al struct.array)
+    // NECESITAMOS TENER POR PARÁMETRO EL STRUCT msg_enviar.
+}
+
+int* Controlador::devolver_columna( int** matriz, int columna )
+{
+
 }

@@ -4,7 +4,6 @@
 
 int main()
 {
-    std::cout << "HPño";
     Controlador controlador;
     controlador.multiplicacion_matrices();
 

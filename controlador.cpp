@@ -19,6 +19,7 @@ struct msgbuffer
 {
     long mtype;
     char mtext[202];
+    int valor;
 };
 
 union semun
@@ -86,7 +87,6 @@ void Controlador::multiplicacion_matrices()
 
 
 
-
             continue;
         }
         else
@@ -98,8 +98,6 @@ void Controlador::multiplicacion_matrices()
             operacionSemaforo.sem_op = -1;
             operacionSemaforo.sem_flg = 0;
             semop(semid, &operacionSemaforo, 1);
-
-            std::cout << "Hijo" << std::endl;
 
             exit(0);
         }
@@ -115,15 +113,39 @@ void Controlador::multiplicacion_matrices()
             // Copio la posición (fila, columna) al array.
 
             // Obtengo y copio fila
-            devolver_fila(matriz_a, fila);
+            devolver_fila(matriz_a, fila, msg_enviar);
 
             // Obtengo y copio columna
-            devolver_columna(matriz_a, columna);
+            devolver_columna(matriz_a, columna, msg_enviar);
 
             // Copio vector columna
         }
     }
 
+    // fork() hijo impresor.
+}
+
+void Controlador::devolver_fila( int** matriz, int fila, struct msgbuffer msg_enviar )
+{
+    // Aquí mismo copio al array (accediento al struct.array)
+    // NECESITAMOS TENER POR PARÁMETRO EL STRUCT msg_enviar.
+}
+
+void Controlador::devolver_columna( int** matriz, int columna, struct msgbuffer msg_recibir )
+{
+
+}
+
+/*  Enviar mensaje
+    sprintf(msg_enviar.mtext, "%s\n", "Este mensaje lo envía el padre.");
+    msg_enviar.mtype = 1;
+    msgsnd(msgid, &msg_enviar, 50, 0);
+*/
+
+/*  Recibir mensaje
+    msgrcv(msgid, &msg_recibir, 50, 1, 0);
+    printf("%d", msg_recibir.valor);
+*/
 
 /*
     // Mando señal a los hijos.
@@ -131,19 +153,4 @@ void Controlador::multiplicacion_matrices()
     operacionSemaforo.sem_op = 1;
     operacionSemaforo.sem_flg = 0;
     semop(semid, &operacionSemaforo, 1);
-    */
-
-
-    // fork() hijo impresor.
-}
-
-int* Controlador::devolver_fila( int** matriz, int fila )
-{
-    // Aquí mismo copio al array (accediento al struct.array)
-    // NECESITAMOS TENER POR PARÁMETRO EL STRUCT msg_enviar.
-}
-
-int* Controlador::devolver_columna( int** matriz, int columna )
-{
-
-}
+*/

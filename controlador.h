@@ -13,8 +13,8 @@ private:
     void matriz_random( int** matriz, int tamano );
     void inicializar_matriz(int **matriz, int tamano );
 
-    int* devolver_fila( int** matriz, int fila );
-    int* devolver_columna( int** matriz, int columna );
+    void devolver_fila( int** matriz, int fila, struct msgbuffer msg_enviar );
+    void devolver_columna( int** matriz, int columna, struct msgbuffer msg_recibir );
 
 
 private:

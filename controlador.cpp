@@ -15,7 +15,7 @@
 
 // Para la cola de mensajes.
 //ToDo: definir cómo se va enviar la información a los procesos hijos.
-struct MS
+struct msgbuffer
 {
     long mtype;
     char mtext[202];
@@ -76,7 +76,7 @@ void Controlador::multiplicacion_matrices()
 
     // Cola de mensajes.
     int msgid = msgget(IPC_PRIVATE, IPC_CREAT| 0600);
-    struct msgbuf msg_enviar;
+    struct msgbuffer msg_enviar;
 
 
     for( size_t contador = 0; contador < 10; ++contador )
@@ -91,7 +91,7 @@ void Controlador::multiplicacion_matrices()
         }
         else
         {                   // Lo que hace el hijo.
-            struct msgbuf msg_recibir;          // Cola de mensaje
+            struct msgbuffer msg_recibir;          // Cola de mensaje
 
             // wait al hijo.
             operacionSemaforo.sem_num = 0;

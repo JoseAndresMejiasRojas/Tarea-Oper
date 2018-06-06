@@ -18,8 +18,7 @@
 struct msgbuffer
 {
     long mtype;
-    char mtext[202];
-    int valor;
+    int vector[TAMANO+TAMANO+2];
 };
 
 union semun
@@ -68,8 +67,8 @@ void Controlador::matriz_random(int **matriz, int tamano )
 // Aquí iniciamos con los procesos :)
 void Controlador::multiplicacion_matrices()
 {
-    // Memoria compartida: Matriz int 100x100
-    int shmid = shmget(IPC_PRIVATE, 4*100*100, IPC_CREAT | 0600);
+    // Memoria compartida: Matriz int TAMANOxTAMANO
+    int shmid = shmget(IPC_PRIVATE, 4*TAMANO*TAMANO, IPC_CREAT | 0600);
 
     // Dos semáforos.
     int semid = semget(IPC_PRIVATE, 2, IPC_CREAT | 0600);
@@ -77,6 +76,7 @@ void Controlador::multiplicacion_matrices()
 
     // Cola de mensajes.
     int msgid = msgget(IPC_PRIVATE, IPC_CREAT| 0600);
+
     struct msgbuffer msg_enviar;
 
 
@@ -111,6 +111,9 @@ void Controlador::multiplicacion_matrices()
         for( size_t columna = 0; columna < TAMANO; ++columna )
         {
             // Copio la posición (fila, columna) al array.
+            //msg_enviar.mtext[0] = const_cast<char>(fila);
+            //msg_enviar.mtext[1] = const_cast<char>(columna);
+
 
             // Obtengo y copio fila
             devolver_fila(matriz_a, fila, msg_enviar);
@@ -128,7 +131,8 @@ void Controlador::multiplicacion_matrices()
 void Controlador::devolver_fila( int** matriz, int fila, struct msgbuffer msg_enviar )
 {
     // Aquí mismo copio al array (accediento al struct.array)
-    // NECESITAMOS TENER POR PARÁMETRO EL STRUCT msg_enviar.
+
+
 }
 
 void Controlador::devolver_columna( int** matriz, int columna, struct msgbuffer msg_recibir )

@@ -68,7 +68,7 @@ void Controlador::matriz_random(int **matriz, int tamano )
 void Controlador::multiplicacion_matrices()
 {
     // Memoria compartida: Matriz int TAMANOxTAMANO
-    int shmid = shmget(IPC_PRIVATE, 4*TAMANO*TAMANO, IPC_CREAT | 0600);
+    shmid = shmget(IPC_PRIVATE, 4*TAMANO*TAMANO, IPC_CREAT | 0600);
 
     // Dos semáforos.
     int semid = semget(IPC_PRIVATE, 2, IPC_CREAT | 0600);
@@ -79,25 +79,28 @@ void Controlador::multiplicacion_matrices()
 
     struct msgbuffer msg_enviar;
 
-
     for( size_t contador = 0; contador < 10; ++contador )
     {
-        if( fork() != 0 )   // Lo que hace el padre
+        if(fork() != 0 )   // Lo que hace el padre
         {
-
-
-
             continue;
         }
         else
         {                   // Lo que hace el hijo.
-            struct msgbuffer msg_recibir;          // Cola de mensaje
-
-            // wait al hijo.
+            struct msgbuffer msg_recibir;
             operacionSemaforo.sem_num = 0;
             operacionSemaforo.sem_op = -1;
             operacionSemaforo.sem_flg = 0;
-            semop(semid, &operacionSemaforo, 1);
+            for(int i = 0; i < 1000; ++i)
+            {      // Cola de mensaje
+              // wait al hijo.
+              semop(semid, &operacionSemaforo, 1);
+
+              msgrcv(msgid, &msg_recibir, (TAMANO*TAMANO+2)*sizeof(int), 1, 0);
+
+
+              //msg_recibir()
+            }
 
             exit(0);
         }
@@ -116,11 +119,11 @@ void Controlador::multiplicacion_matrices()
 
 
             // Obtengo y copio fila
-            devolver_fila(matriz_a, fila, msg_enviar);
+            guardar_fila(matriz_a, fila, msg_enviar);
 
             // Obtengo y copio columna
-            devolver_columna(matriz_a, columna, msg_enviar);
-
+            guardar_columna(matriz_b, columna, msg_enviar);
+            msgsnd(msgid,(struct msgbuf*) &msg_enviar, (TAMANO*TAMANO+2)*sizeof(int), 0);
             // Copio vector columna
         }
     }
@@ -128,16 +131,32 @@ void Controlador::multiplicacion_matrices()
     // fork() hijo impresor.
 }
 
-void Controlador::devolver_fila( int** matriz, int fila, struct msgbuffer msg_enviar )
+void Controlador::guardar_fila( int** matriz, int fila, struct msgbuffer msg_enviar )
 {
     // Aquí mismo copio al array (accediento al struct.array)
-
-
+    for(int i = 0; i < TAMANO; ++i)
+    {
+      msg_enviar.vector[i+2] = matriz[fila][i];
+    }
 }
 
-void Controlador::devolver_columna( int** matriz, int columna, struct msgbuffer msg_recibir )
+void Controlador::guardar_columna( int** matriz, int columna, struct msgbuffer msg_enviar )
 {
+  for(int i = 0; i < TAMANO; ++i)
+  {
+    msg_enviar.vector[i+2+TAMANO] = matriz[i][columna];
+  }
+}
 
+int Controlador::calcular_escalar(struct msgbuffer recibir)
+{
+  int* p = (int*) shmat(shmid, NULL, 0);
+  int resultado = 0;
+  for(int i = 0; i < 100; ++i)
+  {
+    resultado += p[2+i]*p[TAMANO+2+i];
+  }
+  return resultado;
 }
 
 /*  Enviar mensaje

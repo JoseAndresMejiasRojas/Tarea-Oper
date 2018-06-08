@@ -1,2 +1,2 @@
 default:
-	g++ main.cpp controlador.cpp -o ejecutable
+	gcc main.c -o exe

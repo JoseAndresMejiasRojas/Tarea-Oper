@@ -13,7 +13,7 @@
 struct msgbuf
 {
     long mtype;
-    int mtext[TAMANO+TAMANO+2];
+    char mtext[TAMANO+TAMANO+2];
 };
 
 int** matriz_a;
@@ -26,8 +26,8 @@ void mostrar_matriz(int** matriz);
 void mostrar_matriz_resultante();
 void matriz_random( int** matriz, int tamano );
 void inicializar_matriz(int **matriz, int tamano );
-void guardar_fila( int** matriz, int fila, struct msgbuf msg_enviar );
-void guardar_columna( int** matriz, int columna, struct msgbuf msg_recibir );
+void guardar_fila( int** matriz, int fila, struct msgbuf* msg_enviar );
+void guardar_columna( int** matriz, int columna, struct msgbuf* msg_recibir );
 int calcular_escalar(struct msgbuf msg_recibir);
 
 union semun
@@ -105,15 +105,16 @@ void multiplicacion_matrices()
             operacionSemaforo.sem_flg = 0;
 
             // Si TAMANO =  100, la condición es 1000.
-            int contador = 0;
             for(int i = 0; i < TAMANO; ++i)
             {
-              printf("%d\n", ++contador);
-              // wait al hijo.
+              // El hijo en wait.
               semop(semid, &operacionSemaforo, 1);
-
-              //msgrcv(msgid, &msg_recibir, (TAMANO*TAMANO+2)*sizeof(int), 1, 0);
+              // Recibo el mensaje enviado por el padre.
+              msgrcv(msgid, &msg_recibir, (TAMANO+TAMANO+2), 1, 0);
+              //printf("%d\n", msg_recibir.mtext[0]);
             }
+
+            printf("Fin hijos\n");
 
             exit(0);
         }
@@ -121,6 +122,10 @@ void multiplicacion_matrices()
 
     // Creados los 10 hijos.ano];
 
+    // Los parámetros para el semáforo por parte del padre.
+    operacionSemaforo.sem_num = 0;
+    operacionSemaforo.sem_op = 1;
+    operacionSemaforo.sem_flg = 0;
 
     // Padre envía info a sus hijos.
     for( size_t fila = 0; fila < TAMANO; ++fila )
@@ -132,16 +137,13 @@ void multiplicacion_matrices()
             msg_enviar.mtext[1] = columna;
 
             // Obtengo y copio fila
-          //  guardar_fila(matriz_a, fila, msg_enviar);
+            guardar_fila(matriz_a, fila, &msg_enviar);
 
             // Obtengo y copio columna
-        //    guardar_columna(matriz_b, columna, msg_enviar);
-            msgsnd(msgid,(struct msgbuf*) (&msg_enviar), (TAMANO*TAMANO+2)*sizeof(int), 0);
+            guardar_columna(matriz_b, columna, &msg_enviar);
+            msgsnd(msgid, &msg_enviar, (TAMANO+TAMANO+2), 0);
 
             // Mando señal a un h1jo.
-            operacionSemaforo.sem_num = 0;
-            operacionSemaforo.sem_op = 1;
-            operacionSemaforo.sem_flg = 0;
             semop(semid, &operacionSemaforo, 1);
         }
     }
@@ -149,20 +151,20 @@ void multiplicacion_matrices()
     // fork() hijo impresor.
 }
 
-void guardar_fila( int** matriz, int fila, struct msgbuf msg_enviar )
+void guardar_fila( int** matriz, int fila, struct msgbuf* msg_enviar )
 {
     // Aquí mismo copio al array (accediento al struct.array)
     for(int i = 0; i < TAMANO; ++i)
     {
-      msg_enviar.mtext[i+2] = matriz[fila][i];
+        msg_enviar->mtext[i+2] = matriz[fila][i];
     }
 }
 
-void guardar_columna( int** matriz, int columna, struct msgbuf msg_enviar )
+void guardar_columna( int** matriz, int columna, struct msgbuf* msg_enviar )
 {
   for(int i = 0; i < TAMANO; ++i)
   {
-    msg_enviar.mtext[i+2+TAMANO] = matriz[i][columna];
+    msg_enviar->mtext[i+2+TAMANO] = matriz[i][columna];
   }
 }
 

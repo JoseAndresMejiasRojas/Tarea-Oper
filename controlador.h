@@ -5,8 +5,13 @@
 class Controlador
 {
 public:
+
+    int** matriz_a;
+    int** matriz_b;
     Controlador();
     void multiplicacion_matrices();
+    void mostrar_matriz(int** matriz);
+    void mostrar_matriz_resultante(); 
 
 
 private:
@@ -17,10 +22,6 @@ private:
     void guardar_columna( int** matriz, int columna, struct msgbuffer msg_recibir );
     int calcular_escalar(struct msgbuffer msg_recibir);
 
-
-private:
-    int** matriz_a;
-    int** matriz_b;
     int shmid;
 };
 

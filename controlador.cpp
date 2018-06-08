@@ -11,7 +11,7 @@
 #include <sys/msg.h>
 
 
-#define TAMANO 100
+#define TAMANO 10
 
 // Para la cola de mensajes.
 //ToDo: definir cómo se va enviar la información a los procesos hijos.
@@ -152,11 +152,26 @@ int Controlador::calcular_escalar(struct msgbuffer recibir)
 {
   int* p = (int*) shmat(shmid, NULL, 0);
   int resultado = 0;
-  for(int i = 0; i < 100; ++i)
+  for(int i = 0; i < TAMANO; ++i)
   {
     resultado += p[2+i]*p[TAMANO+2+i];
   }
   return resultado;
+}
+
+void Controlador::mostrar_matriz(int** matriz)
+{
+  for (size_t i = 0; i < TAMANO; i++) {
+    for (size_t j = 0; j < TAMANO; j++) {
+      std::cout << matriz[i][j] << " ";
+    }
+    std::cout << '\n';
+  }
+}
+
+void Controlador::mostrar_matriz_resultante()
+{
+
 }
 
 /*  Enviar mensaje

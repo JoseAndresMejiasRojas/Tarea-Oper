@@ -89,6 +89,7 @@ void multiplicacion_matrices()
     int msgid = msgget(IPC_PRIVATE, IPC_CREAT| 0600);
 
     struct msgbuf msg_enviar;
+    struct msgbuf msg_recibir_padre; 
 
     for( size_t contador = 0; contador < 10; ++contador )
     {
@@ -102,7 +103,7 @@ void multiplicacion_matrices()
             // Si TAMANO =  100, la condición es 1000.
             for(int i = 0; i < TAMANO; ++i)
             { 
-			  id = contador;
+			  size_t id = contador;
               // Recibo el mensaje enviado por el padre.
               msgrcv(msgid, &msg_recibir, (TAMANO+TAMANO+2), 1, 0);
               //printf("%d\n", msg_recibir.mtext[0]);
@@ -142,9 +143,9 @@ void multiplicacion_matrices()
     }
 	for( size_t columna = 0; columna < 10; ++columna )
 	{ 
-		msgrcv(msgid, &msg_recibir, (TAMANO+TAMANO+2), 0, 0);
+		msgrcv(msgid, &msg_recibir_padre, (TAMANO+TAMANO+2), 0, 0);
 	}
-	std::cout << "reccibi todo padre" << endl;
+    printf("reccibi todo padre"); 
 	
 
     // fork() hijo impresor.

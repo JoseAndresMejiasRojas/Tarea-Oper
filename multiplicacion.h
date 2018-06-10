@@ -111,7 +111,7 @@ void multiplicacion_matrices()
 			//decirle al padre ya termine
             msg_enviar.mtype = 0; 
             msgsnd(msgid, &msg_enviar, (TAMANO+TAMANO+2), 0);
-			printf("termine");
+			printf(id);
             exit(0);
         }
     }
@@ -143,6 +143,7 @@ void multiplicacion_matrices()
     }
 	for( size_t columna = 0; columna < 10; ++columna )
 	{ 
+		printf("recibi \n");
 		msgrcv(msgid, &msg_recibir_padre, (TAMANO+TAMANO+2), 0, 0);
 	}
     printf("reccibi todo padre"); 

@@ -103,25 +103,23 @@ void multiplicacion_matrices()
             // Si TAMANO =  100, la condición es 1000.
             for(int i = 0; i < TAMANO; ++i)
             { 
-			  size_t id = contador;
+              size_t id = contador;
               // Recibo el mensaje enviado por el padre.
               msgrcv(msgid, &msg_recibir, (TAMANO+TAMANO+2), 1, 0);
               //printf("%d\n", msg_recibir.mtext[0]);
             }
 			//decirle al padre ya termine
-            msg_enviar.mtype = 0; 
-            msgsnd(msgid, &msg_enviar, (TAMANO+TAMANO+2), 0);
-			printf("termine hijo");
+            operacionSemaforo.sem_num = 0;
+            operacionSemaforo.sem_op = 1;
+            operacionSemaforo.sem_flg = 0;
+            printf("termine hijo\n");
+            semop(semid, &operacionSemaforo, 1);
             exit(0);
         }
     }
 
     // Creados los 10 hijos.ano];
-
-    // Los parámetros para el semáforo por parte del padre.
-    operacionSemaforo.sem_num = 0;
-    operacionSemaforo.sem_op = 1;
-    operacionSemaforo.sem_flg = 0;
+ 
 
     // Padre envía info a sus hijos.
     for( size_t fila = 0; fila < TAMANO; ++fila )
@@ -141,12 +139,15 @@ void multiplicacion_matrices()
             msgsnd(msgid, &msg_enviar, (TAMANO+TAMANO+2), 0);
         }
     }
+        operacionSemaforo.sem_num = 0;
+        operacionSemaforo.sem_op = -1;
+        operacionSemaforo.sem_flg = 0;
 	for( size_t columna = 0; columna < 10; ++columna )
-	{ 
-		printf("recibi \n");
-		msgrcv(msgid, &msg_recibir_padre, (TAMANO+TAMANO+2), 0, 0);
+	{       
+                semop(semid, &operacionSemaforo, 1);
+		printf("recibi \n"); 
 	}
-    printf("reccibi todo padre"); 
+    printf("reccibi todo padre \n"); 
 	
 
     // fork() hijo impresor.

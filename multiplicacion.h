@@ -111,7 +111,7 @@ void multiplicacion_matrices()
 			//decirle al padre ya termine
             msg_enviar.mtype = 0; 
             msgsnd(msgid, &msg_enviar, (TAMANO+TAMANO+2), 0);
-
+			printf("termine");
             exit(0);
         }
     }

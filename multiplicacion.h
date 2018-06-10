@@ -146,19 +146,26 @@ void multiplicacion_matrices()
         operacionSemaforo.sem_flg = 0;
     for( size_t columna = 0; columna < 10; ++columna )
     {
+        //esperar hijos
         semop(semid, &operacionSemaforo, 1);
     }
 
     // fork() hijo impresor.
     if(fork() != 0)
     { 
+        semop(semid, &operacionSemaforo, 1);
         return;
     }
     else
     {
         int* memoria_compartida = (int*) (shmat(shmid, NULL, 0));
         mostrar_matriz_resultante(memoria_compartida);
-        exit(0);
+            //Decirle al padre ya termine
+            operacionSemaforo.sem_num = 0;
+            operacionSemaforo.sem_op = 1;
+            operacionSemaforo.sem_flg = 0;
+            semop(semid, &operacionSemaforo, 1);
+            exit(0);
     }
 }
 

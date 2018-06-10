@@ -8,7 +8,7 @@
 #include <sys/sem.h>
 #include <sys/msg.h>
 
-#define TAMANO 10
+#define TAMANO 100 //Si cambia el tamano a 10, favor cambiar la condicion del for, esta comentado abajo
 
 struct msgbuf
 {
@@ -26,7 +26,7 @@ void multiplicacion_matrices();
 void mostrar_matriz(int** matriz);
 void mostrar_matriz_resultante(int* memoria_compartida);
 void matriz_random( int** matriz, int tamano );
-void inicializar_matriz(int **matriz, int tamano );
+void inicializar_matriz(int **matriz, int tamano, int semilla);
 void guardar_fila( int** matriz, int fila, struct msgbuf* msg_enviar );
 void guardar_columna( int** matriz, int columna, struct msgbuf* msg_recibir );
 void calcular_escalar(char* mtext);
@@ -42,25 +42,28 @@ union semun
 void multiplicacion_constructor()
 {
     //matriz_a = new int*[TAMANO];
+    int semilla = 0;
     matriz_a = (int**) malloc(sizeof(int*)*TAMANO);
-    inicializar_matriz(matriz_a, TAMANO);
+    inicializar_matriz(matriz_a, TAMANO, semilla);
     matriz_random(matriz_a, TAMANO);
-
+    mostrar_matriz(matriz_a);
+    
     matriz_b = (int**) malloc(sizeof(int*) * TAMANO);
-    inicializar_matriz(matriz_b, TAMANO);
+    inicializar_matriz(matriz_b, TAMANO, semilla);
     matriz_random(matriz_b, TAMANO);
+    mostrar_matriz(matriz_b);
 }
 
-void inicializar_matriz(int** matriz, int tamano)
+void inicializar_matriz(int** matriz, int tamano, int semilla)
 {
-    srand(0);
+    srand(semilla);
     for( int contador = 0; contador < tamano; ++contador )
     {
         for( int otro_contador = 0; otro_contador < tamano; ++otro_contador )
         {
             matriz[contador] = (int*) malloc(sizeof(int) * tamano);
         }
-    }
+    } 
 }
 
 
@@ -101,8 +104,10 @@ void multiplicacion_matrices()
         else
         {                   // Lo que hace el hijo.
             struct msgbuf msg_recibir;
-            // Si TAMANO =  100, la condición es 1000.
-            for(int i = 0; i < TAMANO; ++i)
+            // Si TAMANO =  100, la condición es 1000 o TAMANO*10.
+            //Para TAMANO = 10^n con n >= 2, la condicion del for es TAMANO*10
+            //Si se va a usar TAMANO = 10, CAMBIAR CONDICION DE FOR A i < 100
+            for(int i = 0; i < TAMANO*10; ++i)
             {
                 // Recibo el mensaje enviado por el padre.
                 msgrcv(msgid, &msg_recibir, (TAMANO+TAMANO+2), 1, 0);
@@ -200,6 +205,14 @@ void mostrar_matriz(int** matriz)
 
 void mostrar_matriz_resultante(int* memoria_compartida)
 {
+    for(int i = 0; i < TAMANO; i++){
+        for(int j = 0; j < TAMANO; j++){
+            printf(" ");
+            printf("%d", memoria_compartida[i*j]);
+            //std::cout << memoria_compartida[i*j];
+        }
+        putchar('\n');
+    }
 }
 
 /*  Enviar mensaje

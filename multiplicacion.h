@@ -19,6 +19,7 @@ struct msgbuf
 int** matriz_a;
 int** matriz_b;
 int shmid;
+void* p;
 
 void multiplicacion_constructor();
 void multiplicacion_matrices();
@@ -151,6 +152,12 @@ void multiplicacion_matrices()
 	
 
     // fork() hijo impresor.
+    if(fork() != 0){
+        return;
+    } else{
+        p = shmat(shmid, NULL, 0);
+        mostrar_matriz_resultante(p);
+    }
 }
 
 void guardar_fila( int** matriz, int fila, struct msgbuf* msg_enviar )
@@ -193,9 +200,9 @@ void mostrar_matriz(int** matriz)
   }
 }
 
-void mostrar_matriz_resultante()
+void mostrar_matriz_resultante(void* p)
 {
-
+    
 }
 
 /*  Enviar mensaje

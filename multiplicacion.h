@@ -98,23 +98,18 @@ void multiplicacion_matrices()
         }
         else
         {                   // Lo que hace el hijo.
-            struct msgbuf msg_recibir;
-
-            operacionSemaforo.sem_num = 0;
-            operacionSemaforo.sem_op = -1;
-            operacionSemaforo.sem_flg = 0;
-
+            struct msgbuf msg_recibir; 
             // Si TAMANO =  100, la condición es 1000.
             for(int i = 0; i < TAMANO; ++i)
-            {
-              // El hijo en wait.
-              semop(semid, &operacionSemaforo, 1);
+            { 
+			  id = contador;
               // Recibo el mensaje enviado por el padre.
               msgrcv(msgid, &msg_recibir, (TAMANO+TAMANO+2), 1, 0);
               //printf("%d\n", msg_recibir.mtext[0]);
             }
-
-            printf("Fin hijos\n");
+			//decirle al padre ya termine
+            msg_enviar.mtype = 0; 
+            msgsnd(msgid, &msg_enviar, (TAMANO+TAMANO+2), 0);
 
             exit(0);
         }
@@ -143,11 +138,14 @@ void multiplicacion_matrices()
             // Obtengo y copio columna
             guardar_columna(matriz_b, columna, &msg_enviar);
             msgsnd(msgid, &msg_enviar, (TAMANO+TAMANO+2), 0);
-
-            // Mando señal a un h1jo.
-            semop(semid, &operacionSemaforo, 1);
         }
     }
+	for( size_t columna = 0; columna < 10; ++columna )
+	{ 
+		msgrcv(msgid, &msg_recibir, (TAMANO+TAMANO+2), 0, 0);
+	}
+	std::cout << "reccibi todo padre" << endl;
+	
 
     // fork() hijo impresor.
 }

@@ -24,12 +24,12 @@ void* p;
 void multiplicacion_constructor();
 void multiplicacion_matrices();
 void mostrar_matriz(int** matriz);
-void mostrar_matriz_resultante();
+void mostrar_matriz_resultante(int* memoria_compartida);
 void matriz_random( int** matriz, int tamano );
 void inicializar_matriz(int **matriz, int tamano );
 void guardar_fila( int** matriz, int fila, struct msgbuf* msg_enviar );
 void guardar_columna( int** matriz, int columna, struct msgbuf* msg_recibir );
-int calcular_escalar(struct msgbuf msg_recibir);
+void calcular_escalar(char* mtext);
 
 union semun
 {
@@ -80,7 +80,7 @@ void matriz_random(int **matriz, int tamano )
 void multiplicacion_matrices()
 {
     // Memoria compartida: Matriz int TAMANOxTAMANO
-    shmid = shmget(IPC_PRIVATE, 4*TAMANO*TAMANO, IPC_CREAT | 0600);
+    shmid = shmget(IPC_PRIVATE, sizeof(int)*TAMANO*TAMANO, IPC_CREAT | 0600);
 
     // Dos semáforos.
     int semid = semget(IPC_PRIVATE, 2, IPC_CREAT | 0600);
@@ -90,7 +90,7 @@ void multiplicacion_matrices()
     int msgid = msgget(IPC_PRIVATE, IPC_CREAT| 0600);
 
     struct msgbuf msg_enviar;
-    struct msgbuf msg_recibir_padre; 
+    struct msgbuf msg_recibir_padre;
 
     for( size_t contador = 0; contador < 10; ++contador )
     {
@@ -100,27 +100,23 @@ void multiplicacion_matrices()
         }
         else
         {                   // Lo que hace el hijo.
-            struct msgbuf msg_recibir; 
+            struct msgbuf msg_recibir;
             // Si TAMANO =  100, la condición es 1000.
             for(int i = 0; i < TAMANO; ++i)
-            { 
-              size_t id = contador;
-              // Recibo el mensaje enviado por el padre.
-              msgrcv(msgid, &msg_recibir, (TAMANO+TAMANO+2), 1, 0);
-              //printf("%d\n", msg_recibir.mtext[0]);
+            {
+                // Recibo el mensaje enviado por el padre.
+                msgrcv(msgid, &msg_recibir, (TAMANO+TAMANO+2), 1, 0);
+                calcular_escalar(msg_recibir.mtext);
             }
-			//decirle al padre ya termine
+            //Decirle al padre ya termine
             operacionSemaforo.sem_num = 0;
             operacionSemaforo.sem_op = 1;
             operacionSemaforo.sem_flg = 0;
-            printf("termine hijo\n");
             semop(semid, &operacionSemaforo, 1);
             exit(0);
         }
     }
-
-    // Creados los 10 hijos.ano];
- 
+    // Creados los 10 hijos
 
     // Padre envía info a sus hijos.
     for( size_t fila = 0; fila < TAMANO; ++fila )
@@ -128,7 +124,7 @@ void multiplicacion_matrices()
         for( size_t columna = 0; columna < TAMANO; ++columna )
         {
             msg_enviar.mtype = 1;
-            // Copio la posición (fila, columna) al array.
+            // Copio las posiciones (fila, columna) al array.
             msg_enviar.mtext[0] = fila;
             msg_enviar.mtext[1] = columna;
 
@@ -143,20 +139,20 @@ void multiplicacion_matrices()
         operacionSemaforo.sem_num = 0;
         operacionSemaforo.sem_op = -1;
         operacionSemaforo.sem_flg = 0;
-	for( size_t columna = 0; columna < 10; ++columna )
-	{       
-                semop(semid, &operacionSemaforo, 1);
-		printf("recibi \n"); 
-	}
-    printf("reccibi todo padre \n"); 
-	
+    for( size_t columna = 0; columna < 10; ++columna )
+    {
+        semop(semid, &operacionSemaforo, 1);
+    }
 
     // fork() hijo impresor.
-    if(fork() != 0){
+    if(fork() != 0)
+    {
         return;
-    } else{
-        p = shmat(shmid, NULL, 0);
-        mostrar_matriz_resultante(p);
+    }
+    else
+    {
+        int* memoria_compartida = (int*) (shmat(shmid, NULL, 0));
+        mostrar_matriz_resultante(memoria_compartida);
     }
 }
 
@@ -171,38 +167,39 @@ void guardar_fila( int** matriz, int fila, struct msgbuf* msg_enviar )
 
 void guardar_columna( int** matriz, int columna, struct msgbuf* msg_enviar )
 {
-  for(int i = 0; i < TAMANO; ++i)
-  {
-    msg_enviar->mtext[i+2+TAMANO] = matriz[i][columna];
-  }
+    for(int i = 0; i < TAMANO; ++i)
+    {
+        msg_enviar->mtext[i+2+TAMANO] = matriz[i][columna];
+    }
 }
 
-int calcular_escalar(struct msgbuf recibir)
+void calcular_escalar(char* mtext)
 {
-  int* p = (int*) shmat(shmid, NULL, 0);
-  int resultado = 0;
-  for(int i = 0; i < TAMANO; ++i)
-  {
-    resultado += p[2+i]*p[TAMANO+2+i];
-  }
-  return resultado;
+    int* memoria_compartida = (int*) shmat(shmid, NULL, 0);
+    int resultado = 0;
+    for(int i = 0; i < TAMANO; ++i)
+    {
+        resultado += mtext[2+i]*mtext[TAMANO+2+i];  // Hago la multiplicacion con el vector de la cola.
+    }
+    // Guardar como matriz: (fila*TAMANO)+columna
+    int posicion = (int)( (mtext[0]*TAMANO) + mtext[1] );
+    memoria_compartida[posicion] = resultado;
 }
 
 void mostrar_matriz(int** matriz)
 {
-  for (size_t i = 0; i < TAMANO; i++)
-  {
-    for (size_t j = 0; j < TAMANO; j++)
+    for (size_t i = 0; i < TAMANO; i++)
     {
-        printf("%d ", matriz[i][j]);
+        for (size_t j = 0; j < TAMANO; j++)
+        {
+            printf("%d ", matriz[i][j]);
+        }
+        putchar('\n');
     }
-    putchar('\n');
-  }
 }
 
-void mostrar_matriz_resultante(void* p)
+void mostrar_matriz_resultante(int* memoria_compartida)
 {
-    
 }
 
 /*  Enviar mensaje

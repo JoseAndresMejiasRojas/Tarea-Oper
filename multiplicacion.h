@@ -132,6 +132,7 @@ void multiplicacion_matrices()
     {
         for( size_t columna = 0; columna < TAMANO; ++columna )
         {
+            msg_enviar.mtype = 1;
             // Copio la posición (fila, columna) al array.
             msg_enviar.mtext[0] = fila;
             msg_enviar.mtext[1] = columna;

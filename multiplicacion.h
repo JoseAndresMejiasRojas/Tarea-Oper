@@ -151,13 +151,14 @@ void multiplicacion_matrices()
 
     // fork() hijo impresor.
     if(fork() != 0)
-    {
+    { 
         return;
     }
     else
     {
         int* memoria_compartida = (int*) (shmat(shmid, NULL, 0));
         mostrar_matriz_resultante(memoria_compartida);
+        exit(0);
     }
 }
 

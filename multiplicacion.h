@@ -30,6 +30,8 @@ void inicializar_matriz(int **matriz, int tamano, int semilla);
 void guardar_fila( int** matriz, int fila, struct msgbuf* msg_enviar );
 void guardar_columna( int** matriz, int columna, struct msgbuf* msg_recibir );
 void calcular_escalar(char* mtext);
+void wait_sem( struct sembuf operacionSemaforo, int semid );
+void signal_sem( struct sembuf operacionSemaforo, int semid );
 
 union semun
 {
@@ -47,7 +49,7 @@ void multiplicacion_constructor()
     inicializar_matriz(matriz_a, TAMANO, semilla);
     matriz_random(matriz_a, TAMANO);
     mostrar_matriz(matriz_a);
-    
+
     matriz_b = (int**) malloc(sizeof(int*) * TAMANO);
     inicializar_matriz(matriz_b, TAMANO, semilla);
     matriz_random(matriz_b, TAMANO);
@@ -63,7 +65,7 @@ void inicializar_matriz(int** matriz, int tamano, int semilla)
         {
             matriz[contador] = (int*) malloc(sizeof(int) * tamano);
         }
-    } 
+    }
 }
 
 
@@ -114,10 +116,7 @@ void multiplicacion_matrices()
                 calcular_escalar(msg_recibir.mtext);
             }
             //Decirle al padre ya termine
-            operacionSemaforo.sem_num = 0;
-            operacionSemaforo.sem_op = 1;
-            operacionSemaforo.sem_flg = 0;
-            semop(semid, &operacionSemaforo, 1);
+            signal_sem( operacionSemaforo, semid );
             exit(0);
         }
     }
@@ -141,32 +140,49 @@ void multiplicacion_matrices()
             msgsnd(msgid, &msg_enviar, (TAMANO+TAMANO+2), 0);
         }
     }
-        operacionSemaforo.sem_num = 0;
-        operacionSemaforo.sem_op = -1;
-        operacionSemaforo.sem_flg = 0;
+
     for( size_t columna = 0; columna < 10; ++columna )
     {
-        //esperar hijos
-        semop(semid, &operacionSemaforo, 1);
+        wait_sem(operacionSemaforo, semid);
     }
 
-    // fork() hijo impresor.
-    if(fork() != 0)
-    { 
-        semop(semid, &operacionSemaforo, 1);
-        return;
-    }
-    else
+    if(fork() == 0) // Lo que hace el impresor.
     {
         int* memoria_compartida = (int*) (shmat(shmid, NULL, 0));
         mostrar_matriz_resultante(memoria_compartida);
-            //Decirle al padre ya termine
-            operacionSemaforo.sem_num = 0;
-            operacionSemaforo.sem_op = 1;
-            operacionSemaforo.sem_flg = 0;
-            semop(semid, &operacionSemaforo, 1);
-            exit(0);
+
+        //Decirle al padre ya terminé.
+        signal_sem( operacionSemaforo, semid );
+        exit(0);
     }
+
+    // El padre espera al impresor, para luego eliminar todo lo creado.
+    wait_sem(operacionSemaforo, semid);
+
+    // Borro la memoria compartida.
+    shmctl(shmid, IPC_RMID, NULL);  // Note que no hay ningún puntero conectado, todos se desconectan.
+
+    // Borro los semáforos.
+    semctl(semid, 0, IPC_RMID, 0);
+
+    // Borro la cola de mensajes.
+    msgctl(msgid, IPC_RMID, 0);
+}
+
+void wait_sem( struct sembuf operacionSemaforo, int semid )
+{
+    operacionSemaforo.sem_num = 0;
+    operacionSemaforo.sem_op = -1;
+    operacionSemaforo.sem_flg = 0;
+    semop(semid, &operacionSemaforo, 1);
+}
+
+void signal_sem( struct sembuf operacionSemaforo, int semid )
+{
+    operacionSemaforo.sem_num = 0;
+    operacionSemaforo.sem_op = 1;
+    operacionSemaforo.sem_flg = 0;
+    semop(semid, &operacionSemaforo, 1);
 }
 
 void guardar_fila( int** matriz, int fila, struct msgbuf* msg_enviar )
@@ -197,6 +213,7 @@ void calcular_escalar(char* mtext)
     // Guardar como matriz: (fila*TAMANO)+columna
     int posicion = (int)( (mtext[0]*TAMANO) + mtext[1] );
     memoria_compartida[posicion] = resultado;
+    shmdt(memoria_compartida);                      // Desconecto el puntero.
 }
 
 void mostrar_matriz(int** matriz)
